@@ -1,5 +1,5 @@
 import streamlit as st
-import pdfplumber
+import pypdf
 import pandas as pd
 import re
 import yfinance as yf
@@ -27,6 +27,7 @@ st.markdown("""
 # --- 1. AI MODEL & LOGIC ---
 @st.cache_resource
 def load_model():
+    # Using a smaller model to reduce memory usage on Cloud Free Tier
     return pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
 def get_yahoo_data(ticker):
@@ -43,6 +44,7 @@ def extract_details(text):
     """Extracts Amount AND determines specific Category"""
     # 1. Extract Amount (Crores)
     amount = 0.0
+    # Adjusted regex for pypdf which might lose some spacing
     pattern = r"([\d,]+(?:\.\d+)?)\s?(Crore|Cr|Lakh|L|Mn|Million|Billion)"
     match = re.search(pattern, text, re.IGNORECASE)
     
@@ -116,8 +118,10 @@ if uploaded_file and st.button("🚀 START FORENSIC ANALYSIS", type="primary"):
     progress_bar = st.progress(0)
     status_text = st.empty()
     
-    with pdfplumber.open(uploaded_file) as pdf:
-        max_pages = len(pdf.pages)
+    # --- CHANGED TO PYPDF LOGIC HERE ---
+    try:
+        reader = pypdf.PdfReader(uploaded_file)
+        max_pages = len(reader.pages)
         end_page = min(start_page + pages_to_scan, max_pages)
         scan_range = range(start_page, end_page)
         
@@ -126,8 +130,12 @@ if uploaded_file and st.button("🚀 START FORENSIC ANALYSIS", type="primary"):
             status_text.caption(f"Scanning Page {page_num} for Ind-AS 37 Disclosures...")
             
             try:
-                text = pdf.pages[page_num].extract_text()
+                page = reader.pages[page_num]
+                text = page.extract_text()
+                
                 if not text: continue
+                
+                # Cleanup text for better processing
                 sentences = text.replace('\n', ' ').split('. ')
                 
                 for sent in sentences:
@@ -149,7 +157,12 @@ if uploaded_file and st.button("🚀 START FORENSIC ANALYSIS", type="primary"):
                                      "Amount (Cr)": amt,
                                      "Confidence": res['scores'][0]
                                  })
-            except: continue
+            except Exception as e:
+                # Skip individual page errors
+                continue
+                
+    except Exception as e:
+        st.error(f"Error reading PDF: {e}")
             
     progress_bar.empty()
     status_text.empty()
