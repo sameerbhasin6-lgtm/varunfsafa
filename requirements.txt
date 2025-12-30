@@ -1,8 +1,6 @@
 streamlit
-pdfplumber
 pandas
 yfinance
 plotly
-transformers
-torch
-pdfminer.sfx
+pdfplumber
+pdfminer.six
