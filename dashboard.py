@@ -12,6 +12,10 @@ import yfinance as yf
 import plotly.graph_objects as go
 import plotly.express as px
 from transformers import pipeline
+    hf_available = True
+except Exception as e:
+    hf_available = False
+    st.warning("NLP features disabled (transformers not available)")
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -230,5 +234,6 @@ if uploaded_file and st.button("🚀 START FORENSIC ANALYSIS", type="primary"):
             st.download_button("📥 Download Forensic Report", csv, "risk_report.csv", "text/csv")
         else:
             st.warning("No significant risks found in the scanned page range.")
+
 
 
