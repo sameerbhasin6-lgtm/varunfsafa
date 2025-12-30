@@ -1,5 +1,5 @@
 import streamlit as st
-import pypdf
+import pdfplaumer
 import pandas as pd
 import re
 import yfinance as yf
@@ -224,3 +224,4 @@ if uploaded_file and st.button("🚀 START FORENSIC ANALYSIS", type="primary"):
             st.download_button("📥 Download Forensic Report", csv, "risk_report.csv", "text/csv")
         else:
             st.warning("No significant risks found in the scanned page range.")
+
